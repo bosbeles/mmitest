@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -61,6 +62,8 @@ public class Main {
 
 
         List<Record<String>> stringList = subscriptionResult.waitRecordList(10, TimeUnit.SECONDS);
+        List<String> stringList2 = subscriptionResult.waitDataList(10, TimeUnit.SECONDS);
+        System.out.println("Subscription: " + Arrays.toString(stringList2.toArray()));
 
         System.out.println("Subscription: " + Arrays.toString(stringList.toArray()));
     }
