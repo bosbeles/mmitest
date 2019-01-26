@@ -1,9 +1,9 @@
 package main;
 
-import mmitest.SubscriptionResult;
 import mmitest.Mmi;
 import mmitest.Record;
 import mmitest.Subscription;
+import mmitest.SubscriptionResult;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,8 +35,7 @@ public class Main {
                 mmi.newData("Dene");
                 sleep();
                 mmi.newData("Done");
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
 
@@ -45,8 +44,8 @@ public class Main {
 
         Subscription<String> subscription =
                 new Subscription<String>("String")
-                .filter(record-> record.getData().length() > 3 && record.getType() == Record.Type.RX)
-                .until((list,record) -> list.size() == 2 && record.getType() == Record.Type.DELETED);
+                        .filter(record -> record.getData().length() > 3 && record.getType() == Record.Type.RX)
+                        .until((list, record) -> list.size() == 2 && record.getType() == Record.Type.DELETED);
         SubscriptionResult<String> subscriptionResult = mmi.subscribe(subscription);
 
         SubscriptionResult<String> subscriptionResult2 = mmi.subscribe("String", String.class);
@@ -54,10 +53,10 @@ public class Main {
         SubscriptionResult<String> subscriptionResult4 = mmi.subscribe("String");
 
         executor.scheduleWithFixedDelay(() -> {
-            System.out.println("Record: " +  Arrays.toString( subscriptionResult.getRecordList().toArray()));
-            System.out.println("Record2: " +  Arrays.toString( subscriptionResult2.getRecordList().toArray()));
-            System.out.println("Record3: " +  Arrays.toString( subscriptionResult3.getRecordList().toArray()));
-            System.out.println("Record4: " +  Arrays.toString( subscriptionResult4.getRecordList().toArray()));
+            System.out.println("Record: " + Arrays.toString(subscriptionResult.getRecordList().toArray()));
+            System.out.println("Record2: " + Arrays.toString(subscriptionResult2.getRecordList().toArray()));
+            System.out.println("Record3: " + Arrays.toString(subscriptionResult3.getRecordList().toArray()));
+            System.out.println("Record4: " + Arrays.toString(subscriptionResult4.getRecordList().toArray()));
         }, 1, 1, TimeUnit.SECONDS);
 
 
