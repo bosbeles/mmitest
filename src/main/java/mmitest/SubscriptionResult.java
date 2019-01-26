@@ -10,14 +10,14 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 @Data
-    public class SubscriptionRecord<T> {
+    public class SubscriptionResult<T> {
         private final BiPredicate until;
         private final Predicate filter;
         private final String topic;
         private final CountDownLatch latch = new CountDownLatch(1);
         List recordList = new ArrayList<>();
 
-        public SubscriptionRecord(String topic, Predicate<Record<T>> filter, BiPredicate<List<T>, Record<T>> until) {
+        public SubscriptionResult(String topic, Predicate<Record<T>> filter, BiPredicate<List<T>, Record<T>> until) {
             this.topic = topic;
             this.filter = filter;
             this.until = until;
