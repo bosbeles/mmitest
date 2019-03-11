@@ -29,6 +29,8 @@ public class LogViewer extends JPanel {
         logTable.setModel(logTableModel);
 
 
+
+
         JSplitPane splitPane = new JSplitPane();
         splitPane.setDividerLocation(350);
         splitPane.setOneTouchExpandable(true);
@@ -96,6 +98,7 @@ public class LogViewer extends JPanel {
         protected void process(List<LogItem> chunks) {
             //System.out.println("Adding " + chunks.size() + " rows");
             tableModel.addRows(chunks);
+            logTable.changeSelection(logTable.getRowCount() - 1, 0, false, false);
         }
     }
 

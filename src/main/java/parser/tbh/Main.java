@@ -5,22 +5,59 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
 
-    public static void main(String[] args) throws DecoderException {
-        FullStackEncoder parser = new FullStackEncoder();
+    static int writerCounter;
+    static int foundCounter;
+    static int callCounter;
 
-        parser.read(Hex.decodeHex("aaaaaaaa7e7e5d5e112233445566778800040005"));
-        parser.read(Hex.decodeHex("012233445566778899"));
-        parser.read(Hex.decodeHex("112233445566778899"));
-        parser.read(Hex.decodeHex("212233445566778899"));
-        parser.read(Hex.decodeHex("312233445566778899"));
-        parser.read(Hex.decodeHex("4122334455667788997e7e5d5e"));
-        parser.read(Hex.decodeHex("aaaaaaaa7e7e5d5e112233445566778800040005"));
+    static boolean log = false;
+    static int numberOfTries = 3;
+    static int testSize = 1000000;
+
+    public static void main(String[] args) throws DecoderException, InterruptedException {
 
 
-        System.out.println("Dump: " + Hex.encodeHexString(parser.dump()));
+
+        List<byte[]> bytes = new ArrayList<>();
+        bytes.add(Hex.decodeHex("01aaaaaa7e7e5d5e112233445566778800240025"));
+        bytes.add(Hex.decodeHex("022233445566778899"));
+        bytes.add(Hex.decodeHex("0322334455667788997e7e5d5e"));
+        bytes.add(Hex.decodeHex("042233445566778899"));
+        bytes.add(Hex.decodeHex("052233445566778899"));
+        bytes.add(Hex.decodeHex("0522334455667788990522334455667788990522334455667788990522334455667788997e0522334455667788990522334455667788990522334455667788997e"));
+        bytes.add(Hex.decodeHex("0632323232323232323232323232327e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e3232323232323232323232323232323232323232323232323232323232323232323232323232327e7e5d5e"));
+        bytes.add(Hex.decodeHex("072233447e7e5d5e66778800120013"));
+        bytes.add(Hex.decodeHex("0800020003447e7e5d5e7e7e7e5d5e"));
+        bytes.add(Hex.decodeHex("09aaaaaa7e7e5d5e112233445566778800120013"));
+        bytes.add(Hex.decodeHex("102233445566778899"));
+        bytes.add(Hex.decodeHex("112233445566778899"));
+        bytes.add(Hex.decodeHex("7e7e5d5e112233445566778800120013"));
+        bytes.add(Hex.decodeHex("012233445566778899"));
+        bytes.add(Hex.decodeHex("112233445566778800"));
+        bytes.add(Hex.decodeHex("1122334455667788997e007e7e5d5e7e7e5d5e7e7e5d5e"));
+        bytes.add(Hex.decodeHex("7e7e000000120013112233445566778800120013"));
+        bytes.add(Hex.decodeHex("7e7e5d5e112233445566778800120013"));
+        bytes.add(Hex.decodeHex("012233445566778899"));
+        bytes.add(Hex.decodeHex("112233445566778899"));
+        bytes.add(Hex.decodeHex("7e7e5d5e1122334455667788001200130122334455667788990122334455667788997e7e5d5e1122334455667788001200130122334455667788990122334455667788997e7e5d5e1122334455667788001200130122334455667788990122334455667788997e7e5d5e1122334455667788001200130122334455667788990122334455667788997e7e5d5e112233445566778800120013012233445566778899012233445566778899"));
+        bytes.add(Hex.decodeHex("7e7e5d5e1122334455667788001200130122334455667788990122334455667788997e7e5d5e1122334455667788001200130122334455667788990122334455667788997e7e5d5e1122334455667788001200130122334455667788990122334455667788997e7e5d5e1122334455667788001200130122334455667788990122334455667788997e7e5d5e112233445566778800120013012233445566778899012233445566778899"));
+
+
+        for (int j = 0; j < numberOfTries; j++) {
+            FullStackEncoder parser = new FullStackEncoder(34);
+            long time = System.currentTimeMillis();
+            for (int i = 0; i < testSize; i++) {
+                bytes.stream().forEach(parser::read);
+            }
+
+            time = System.currentTimeMillis() - time;
+            System.out.println(time + " " + callCounter + " " + writerCounter + " " + foundCounter);
+
+        }
 
 
     }
@@ -40,19 +77,22 @@ public class Main {
         }
 
         public int write(byte[] bytes, int offset, int length) {
-            if (length == 0) return length;
+            if (length == 0 || capacity == size) return 0;
 
+            writerCounter++;
             int writeLen = Math.min(capacity - size, length);
-            int clippedLen = clip(writerIndex + writeLen);
+            int newWriterIndex = clip(writerIndex + writeLen);
 
-            if (clippedLen > writerIndex || clippedLen == 0) {
+
+            if (newWriterIndex > writerIndex || newWriterIndex == 0) {
                 System.arraycopy(bytes, offset, buffer, writerIndex, writeLen);
             } else {
-                System.arraycopy(bytes, offset, buffer, writerIndex, writeLen - clippedLen);
-                System.arraycopy(bytes, offset + writeLen - clippedLen, buffer, 0, clippedLen);
+                System.arraycopy(bytes, offset, buffer, writerIndex, writeLen - newWriterIndex);
+                System.arraycopy(bytes, offset + writeLen - newWriterIndex, buffer, 0, newWriterIndex);
             }
 
-            writerIndex = clippedLen;
+
+            writerIndex = newWriterIndex;
             size += writeLen;
 
             return writeLen;
@@ -136,6 +176,8 @@ public class Main {
     static class FullStackEncoder {
 
 
+        private final int maxPacketSize;
+
         private enum STATE {
             SEARCHING_FOR_SYN, SEARCHING_FOR_TBH, SEARCHING_FOR_PACKET
         }
@@ -152,6 +194,7 @@ public class Main {
 
         public FullStackEncoder(int maxPacketSize) {
             buffer = new CircularBuffer(maxPacketSize);
+            this.maxPacketSize = maxPacketSize;
             reset();
 
         }
@@ -168,9 +211,10 @@ public class Main {
         }
 
         public void read(byte[] bytes) {
+            callCounter++;
             int remainingBytes = bytes.length - buffer.write(bytes, 0, bytes.length);
             while (buffer.size >= requiredBytes) {
-                remainingBytes -= buffer.write(bytes, bytes.length - remainingBytes, remainingBytes);
+
                 switch (state) {
                     case SEARCHING_FOR_SYN:
                         searchingForSyn();
@@ -182,15 +226,24 @@ public class Main {
                         searchingForPacket();
                         break;
                 }
+                if (buffer.size() < requiredBytes)
+                    remainingBytes -= buffer.write(bytes, bytes.length - remainingBytes, remainingBytes);
+                if (log)
+                    System.out.println(state);
             }
-            System.out.println(state);
+
 
         }
 
         private void searchingForPacket() {
             if (buffer.size() >= requiredBytes) {
                 byte[] readBytes = buffer.read(requiredBytes);
-                System.out.println(Hex.encodeHexString(readBytes));
+                if (readBytes.length > 0) {
+                    foundCounter++;
+                }
+                if (log) {
+                    System.out.println(foundCounter + ": " + Hex.encodeHexString(readBytes) + " " + callCounter);
+                }
                 buffer.skip(requiredBytes);
                 state = STATE.SEARCHING_FOR_SYN;
                 requiredBytes = 16;
@@ -201,9 +254,9 @@ public class Main {
             if (buffer.size() >= requiredBytes) {
                 byte[] readBytes = buffer.read(requiredBytes);
                 packet = new Packet(readBytes);
-                if (packet.isValid()) {
+                if (packet.isValid() && packet.length + 16 <= maxPacketSize) {
                     state = STATE.SEARCHING_FOR_PACKET;
-                    requiredBytes = 9 * packet.getLength() + 16;
+                    requiredBytes = packet.getLength() + 16;
                 } else {
                     state = STATE.SEARCHING_FOR_SYN;
                     buffer.skip(4);
@@ -220,7 +273,10 @@ public class Main {
                     int index = buffer.find(SYN);
                     if (index > -1) {
                         buffer.skip(index);
+                    } else {
+                        buffer.skip(buffer.size());
                     }
+
                 }
             }
         }

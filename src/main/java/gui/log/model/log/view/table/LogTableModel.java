@@ -19,6 +19,7 @@ public class LogTableModel extends AbstractTableModel {
         int rowCount = getRowCount();
         data.add(logItem);
         fireTableRowsInserted(rowCount, rowCount);
+
     }
 
     public void addRows(LogItem... logItems) {
@@ -29,6 +30,7 @@ public class LogTableModel extends AbstractTableModel {
         int rowCount = getRowCount();
         data.addAll(list);
         fireTableRowsInserted(rowCount, getRowCount() - 1);
+
     }
 
     @Override
